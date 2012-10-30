@@ -22,6 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 public class SemaphoreGUI implements java.util.Observer {
 	
@@ -63,6 +64,7 @@ public class SemaphoreGUI implements java.util.Observer {
 	private JLabel lossCount = new JLabel("0");
 	
 	private final JPanel wordPanel = new JPanel();
+	private final JLabel correctWordLabel = new JLabel();
 
 	private enum Style {
 		Input,
@@ -81,7 +83,7 @@ public class SemaphoreGUI implements java.util.Observer {
 							
 		createButtons(controller);
 		
-		frame.setSize(500, 400);
+		frame.setSize(550, 400);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		createMainLayout();
@@ -306,23 +308,25 @@ public class SemaphoreGUI implements java.util.Observer {
 		
 		JPanel line_start = new JPanel();
 		line_start.add(optionPanel());
-		//lineBorder(line_start);		
 		
 		JPanel line_end = new JPanel();
 		line_end.add(scorePanel());
-		//lineBorder(line_end);
-		
 		
 		JPanel page_end = new JPanel();
 		page_end.add(userPanel());
-		//lineBorder(page_end);
 		
 		JPanel center = new JPanel();
-		center.add(animation);
-		//lineBorder(center);
+		center.setLayout(new BorderLayout(0, 0));
+		animation.setHorizontalAlignment(SwingConstants.CENTER);
+		
+		center.add(BorderLayout.CENTER, animation);
+		correctWordLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		center.add(BorderLayout.PAGE_END, correctWordLabel);
 		
 		frame.getContentPane().add(BorderLayout.LINE_START, line_start);
 		frame.getContentPane().add(BorderLayout.CENTER, center);
+		
+		
 		frame.getContentPane().add(BorderLayout.LINE_END, line_end);
 		frame.getContentPane().add(BorderLayout.PAGE_END, page_end);
 		
@@ -357,6 +361,9 @@ public class SemaphoreGUI implements java.util.Observer {
 		}
 		
 		if(state.isIdle) { 
+			if(!state.word.equals("")) {
+				correctWordLabel.setText("The correct word is: " + state.word);
+			}
 			replayButton.setEnabled(false);
 			guessButton.setEnabled(false);
 			newWordButton.setEnabled(true);
@@ -365,6 +372,7 @@ public class SemaphoreGUI implements java.util.Observer {
 			toggleOptions(true);
 		}
 		else {
+			correctWordLabel.setText(" ");
 			toggleOptions(false);
 			guessButton.setEnabled(true);
 			replayButton.setEnabled(true);

@@ -30,7 +30,7 @@ public class Semaphore extends java.util.Observable {
 	//State Variables
 	private boolean idleState = true;
 	private String image = new String("");
-	private String word = "";
+	private String word = new String("");
 	private int highScore = 0;
 	private int score = 0;
 	private int wins = 0;
