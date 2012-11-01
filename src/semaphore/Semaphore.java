@@ -1,9 +1,10 @@
 package semaphore;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,8 +25,6 @@ public class Semaphore extends java.util.Observable {
 	
 	private HashMap<Integer, ArrayList<Word>> 
 		usedWords = new HashMap<Integer, ArrayList<Word>>();
-	
-	
 	
 	//State Variables
 	private boolean idleState = true;
@@ -60,12 +59,19 @@ public class Semaphore extends java.util.Observable {
 	 * @return
 	 */
 	private List<String> loadFile(String pathLocation) {
-		Path path = FileSystems.getDefault().getPath(pathLocation);
+		//InputStream is = this.getClass().getResourceAsStream("semaphore/"+pathLocation);
+		//System.out.println("fileSystem" + FileSystems.getDefault().);
+		//Path path = Paths.get(pathLocation);
+		//Path p = FileSystems.getDefault().getPath(pathLocation);
+		//System.out.println("Loader: " + getClass().getClassLoader().getResource(pathLocation).toURI());
+		//String 
 		List<String> file = new ArrayList<String>();
 		try {
+			//URI uri = getClass().getClassLoader().getResource(pathLocation).toURI();
+			//System.out.println("URI: " + uri.toString());
+			Path path = Paths.get(pathLocation);
 			file = Files.readAllLines(path, Charset.forName("US-ASCII"));
 		} catch (IOException e) {
-			System.out.println(path.toString() + " not found!");
 			e.printStackTrace();
 		}
 		

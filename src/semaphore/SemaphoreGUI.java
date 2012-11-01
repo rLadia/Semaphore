@@ -7,10 +7,18 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.image.BufferedImage;
+
+import java.io.File;
+import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Observable;
 
+import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -24,11 +32,15 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import org.imgscalr.*;
+
 public class SemaphoreGUI implements java.util.Observer {
 	
 	private JFrame frame = new JFrame("Semaphore");
 	private String currentImage = new String("");
 	private HashMap<String, JComponent> interactables = new HashMap<String, JComponent>();
+	
+	private int imgSize_ = 200;
 	
 	private boolean newAnimation = false;
 	
@@ -42,6 +54,7 @@ public class SemaphoreGUI implements java.util.Observer {
 	public static String[] letters = { "3", "4", "5", "Any",};
 	
 	//Central Animation
+	private BufferedImage image_;
 	private JLabel animation = new JLabel();
 	
 	//User Input
@@ -83,7 +96,7 @@ public class SemaphoreGUI implements java.util.Observer {
 							
 		createButtons(controller);
 		
-		frame.setSize(550, 400);
+		frame.setSize(500, 400);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		createMainLayout();
@@ -283,24 +296,6 @@ public class SemaphoreGUI implements java.util.Observer {
 		return userPanel;
 	}
 	
-	/*
-	private void lineBorder(JPanel panel) {
-		Border blackLine = BorderFactory.createLineBorder(Color.BLACK);
-		
-		panel.setBorder(blackLine);
-		for(Component j : panel.getComponents()) {
-			if(j instanceof JPanel) {
-				((JPanel) j).setBorder(blackLine);
-				lineBorder((JPanel) j);
-			}
-			
-			if(j instanceof JComponent) {
-				((JComponent) j).setBorder(blackLine);
-			}
-		}
-	}
-	*/
-	
 	/**
 	 * Organizes the frame's layout
 	 */
@@ -315,22 +310,48 @@ public class SemaphoreGUI implements java.util.Observer {
 		JPanel page_end = new JPanel();
 		page_end.add(userPanel());
 		
-		JPanel center = new JPanel();
-		center.setLayout(new BorderLayout(0, 0));
+		JPanel center = new JPanel(new BorderLayout());
 		animation.setHorizontalAlignment(SwingConstants.CENTER);
-		
+				
 		center.add(BorderLayout.CENTER, animation);
 		correctWordLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		center.add(BorderLayout.PAGE_END, correctWordLabel);
 		
 		frame.getContentPane().add(BorderLayout.LINE_START, line_start);
 		frame.getContentPane().add(BorderLayout.CENTER, center);
-		
-		
 		frame.getContentPane().add(BorderLayout.LINE_END, line_end);
 		frame.getContentPane().add(BorderLayout.PAGE_END, page_end);
 		
 		frame.setVisible(true);
+		
+		center.addComponentListener(new FrameResize());
+	}
+	
+	private class FrameResize implements ComponentListener {
+		@Override
+		public void componentResized(ComponentEvent e) {
+			imgSize_ = e.getComponent().getSize().width;
+			setImage(image_);
+		}
+
+		@Override
+		public void componentHidden(ComponentEvent arg0) {}
+		@Override
+		public void componentMoved(ComponentEvent arg0) {}
+		@Override
+		public void componentShown(ComponentEvent arg0) {}
+		
+	}
+	
+	private BufferedImage loadImage(String pathLocation) {
+		try {
+			BufferedImage img = ImageIO.read(new File(pathLocation));
+			return img;
+		} catch (IOException e) {
+			System.out.println(pathLocation + " not found.");
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	//*TODO* thread the loading of the image
@@ -339,10 +360,20 @@ public class SemaphoreGUI implements java.util.Observer {
 	 * @param label
 	 * @param path
 	 */
-	private void setDrawing(JLabel label, String pathLocation) {		
-		label.setIcon(new ImageIcon(pathLocation));
+	private void setDrawing(String pathLocation) {
+		BufferedImage img = loadImage(pathLocation);
+		image_ = img;
+		if(img == null)
+			return; //*TODO* add to error log, use default image
+		setImage(image_);
+				
 	}
 
+	private void setImage(BufferedImage img) {
+		img = Scalr.resize(img, imgSize_);
+		animation.setIcon(new ImageIcon(img));
+	}
+	
 	private void toggleOptions(boolean status) {
 		for(JRadioButton l : letterButton) {
 			l.setEnabled(status);
@@ -357,7 +388,7 @@ public class SemaphoreGUI implements java.util.Observer {
 	public void update(Observable observable, Object o) {
 		Semaphore.State state = (Semaphore.State) o; 
 		if(!state.image.equals(currentImage)) {
-			this.setDrawing(animation, state.image);
+			this.setDrawing(state.image);
 		}
 		
 		if(state.isIdle) { 
