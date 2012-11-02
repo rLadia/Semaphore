@@ -324,13 +324,27 @@ public class SemaphoreGUI implements java.util.Observer {
 		
 		frame.setVisible(true);
 		
+		imgSize_ = smallestSide(center);
 		center.addComponentListener(new FrameResize());
+	}
+	
+	
+	/**
+	 * returns the smaller of the component's width and height
+	 * @param c
+	 * @return
+	 */
+	private int smallestSide(Component c) {
+		int width = c.getWidth();
+		int height = c.getHeight();
+		return width < height ? width : height;
 	}
 	
 	private class FrameResize implements ComponentListener {
 		@Override
 		public void componentResized(ComponentEvent e) {
-			imgSize_ = e.getComponent().getSize().width;
+			//*TODO* return size needed to fill the component
+			imgSize_ = smallestSide(e.getComponent());
 			setImage(image_);
 		}
 

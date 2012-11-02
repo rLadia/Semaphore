@@ -27,15 +27,15 @@ public class Semaphore extends java.util.Observable {
 		usedWords = new HashMap<Integer, ArrayList<Word>>();
 	
 	//State Variables
-	private boolean idleState = true;
-	private String image = new String("");
-	private String word = new String("");
-	private int highScore = 0;
-	private int score = 0;
-	private int wins = 0;
-	private int losses = 0;
-	private int speed = 1;
-	private int letters = 3;
+	private boolean idleState_ = true;
+	private String picture_ = new String("");
+	private String word_ = new String("");
+	private int highScore_ = 0;
+	private int score_ = 0;
+	private int wins_ = 0;
+	private int losses_ = 0;
+	private int speed_ = 1;
+	private int letters_ = 3;
 	
 	private int DEFAULT_SPEED = 1500; //1 second per letter
 	
@@ -59,16 +59,8 @@ public class Semaphore extends java.util.Observable {
 	 * @return
 	 */
 	private List<String> loadFile(String pathLocation) {
-		//InputStream is = this.getClass().getResourceAsStream("semaphore/"+pathLocation);
-		//System.out.println("fileSystem" + FileSystems.getDefault().);
-		//Path path = Paths.get(pathLocation);
-		//Path p = FileSystems.getDefault().getPath(pathLocation);
-		//System.out.println("Loader: " + getClass().getClassLoader().getResource(pathLocation).toURI());
-		//String 
 		List<String> file = new ArrayList<String>();
 		try {
-			//URI uri = getClass().getClassLoader().getResource(pathLocation).toURI();
-			//System.out.println("URI: " + uri.toString());
 			Path path = Paths.get(pathLocation);
 			file = Files.readAllLines(path, Charset.forName("US-ASCII"));
 		} catch (IOException e) {
@@ -81,7 +73,7 @@ public class Semaphore extends java.util.Observable {
 	/**
 	 * Fills the Word Bank using words from file at WORD_BANK_LOCATION
 	 * Words are randomly added to the word bank, sorted by how many letters 
-	 * are in each word 
+	 * contained in each word 
 	 */
 	private void populateWordBank() {
 		
@@ -91,7 +83,7 @@ public class Semaphore extends java.util.Observable {
 		for(String line : file) {
 			List<String> wordArray = Arrays.asList(line.split(" "));
 			for(String word : wordArray) {
-				assignWord(this.wordBank, new Word(word));
+				putWord(this.wordBank, new Word(word));
 			}
 		}
 		
@@ -100,7 +92,13 @@ public class Semaphore extends java.util.Observable {
 		}
 	}
 	
-	private void assignWord(HashMap<Integer, ArrayList<Word>> wordBank, Word word) {
+	/**
+	 * Adds word to the proper array in wordBank. If there is no existing  
+	 * array, one is created and the word is added to it
+	 * @param wordBank
+	 * @param word
+	 */
+	private void putWord(HashMap<Integer, ArrayList<Word>> wordBank, Word word) {
 		int letterCount = word.word.length();
 		if(!wordBank.containsKey(letterCount))
 			wordBank.put(letterCount, new ArrayList<Word>());
@@ -120,14 +118,14 @@ public class Semaphore extends java.util.Observable {
 	 * bank.
 	 */
 	public void setupNewWord() {
-		if(idleState == false) 
+		if(idleState_ == false) 
 			return;
 					
-		idleState = false;
+		idleState_ = false;
 		
-		word = randomWord();
+		word_ = randomWord();
 		animation = 
-				new WordAnimation(this, word, DEFAULT_SPEED - 350*(speed-1));
+				new WordAnimation(this, word_, DEFAULT_SPEED - 350*(speed_-1));
 	}
 	
 	/**
@@ -135,15 +133,15 @@ public class Semaphore extends java.util.Observable {
 	 * 
 	 */
 	public void replayWord() {
-		if(idleState == true) //no word to replay 
+		if(idleState_ == true) //no word to replay 
 			return;
 		
 		animation = 
-				new WordAnimation(this, word, DEFAULT_SPEED - 350*(speed-1));
+				new WordAnimation(this, word_, DEFAULT_SPEED - 350*(speed_-1));
 	}
 	private String randomWord() {		
-		if(this.letters != 0) {
-			return chooseWord(this.letters);
+		if(letters_ != 0) {
+			return chooseWord(letters_);
 		} else { //can use any set of letters
 			int totalWords = 0;
 			for (Integer i : wordBank.keySet()) {
@@ -162,6 +160,7 @@ public class Semaphore extends java.util.Observable {
 		return chooseWord(1); //should never reach here
 	}
 	
+	//*TODO* improve this process
 	/** Returns a random word from the list of words with an amount of 
 	 * letters equal to letterIndex. Adds the word to the usedWord bank
 	 * preventing it from being used again
@@ -172,7 +171,7 @@ public class Semaphore extends java.util.Observable {
 		System.out.println("Letter Index: "+ letterIndex);
 		int wordIndex = random.nextInt(wordBank.get(letterIndex).size());
 		Word word = wordBank.get(letterIndex).get(wordIndex);
-		assignWord(usedWords, word);
+		putWord(usedWords, word);
 		wordBank.get(letterIndex).remove(wordIndex);
 		checkWordBank();
 		return word.word;
@@ -211,16 +210,21 @@ public class Semaphore extends java.util.Observable {
 		return word;
 	}*/
 	
-	
-	
+	/**
+	 * Compares the guess to the actual word. Updates the score and causes the
+	 * program to enter the idle state. If the program is idle, this function
+	 * does nothing
+	 * 
+	 * @param guess - compared to the actual word 
+	 */
 	public void checkGuess(String guess) {
-		if(idleState)
+		if(idleState_)
 			return; 
 		
-		idleState = true;
+		idleState_ = true;
 		//*TODO* add checks for invalid guesses, incorrect letters etc.
 		animation.cancel();
-		if(guess.equalsIgnoreCase(this.word)) {
+		if(guess.equalsIgnoreCase(word_)) {
 			updateScore(true);
 		} else {
 			updateScore(false);
@@ -235,15 +239,15 @@ public class Semaphore extends java.util.Observable {
 	private void updateScore(boolean won) {
 		String image;
 		if(won) {
-			this.wins ++;
+			wins_ ++;
 			
-			int letterMultiplier = this.letters;
+			int letterMultiplier = letters_;
 			if(letterMultiplier == 0) //any # of letters
 				letterMultiplier = 6;
-			score += speed * letterMultiplier;
+			score_ += speed_ * letterMultiplier;
 			image = new String("correct.gif");
 		} else {
-			this.losses ++;
+			losses_ ++;
 			image = new String("incorrect.gif");
 		}
 		
@@ -251,9 +255,12 @@ public class Semaphore extends java.util.Observable {
 		this.setImage(image);
 	}
 	
+	/**
+	 * Updates high score
+	 */
 	private void checkHighScore() {
-		if(this.score > this.highScore)
-			this.highScore = this.score; 
+		if(score_ > highScore_)
+			highScore_ = score_; 
 	}
 	
 	private class Word implements Comparable<Word> {
@@ -270,6 +277,9 @@ public class Semaphore extends java.util.Observable {
 		}
 	}
 	
+	/**
+	 * state accessible by observers
+	 */
 	public class State {
 		public String image;
 		public String word;
@@ -282,14 +292,14 @@ public class Semaphore extends java.util.Observable {
 		public boolean isIdle;
 		
 		public State(Semaphore model) {
-			image = model.image;
-			word = model.word;
-			highScore = model.highScore;
-			score = model.score;
-			wins = model.wins;
-			losses = model.losses;
-			speed = model.speed;
-			letters = model.letters;
+			image = model.picture_;
+			word = model.word_;
+			highScore = model.highScore_;
+			score = model.score_;
+			wins = model.wins_;
+			losses = model.losses_;
+			speed = model.speed_;
+			letters = model.letters_;
 			isIdle = model.isIdle();
 		}
 	}
@@ -304,7 +314,7 @@ public class Semaphore extends java.util.Observable {
 	}
 	
 	private void setImage(String imageLocation) {
-		this.image = IMAGE_DIR + imageLocation;
+		picture_ = IMAGE_DIR + imageLocation;
 		update();
 	}
 		
@@ -328,11 +338,11 @@ public class Semaphore extends java.util.Observable {
 		@Override
 		public void run() {	
 			if(index >= word.length()) {
-				model.setImage("guess.gif");
+				model.setImage("guess.png");
 				this.cancel();
 			} else {
 				char letter = word.charAt(index);
-				String imageLocation = "img" + letter + ".gif";
+				String imageLocation = letter + ".gif";
 				model.setImage(imageLocation);
 				index++;
 			}
@@ -342,18 +352,18 @@ public class Semaphore extends java.util.Observable {
 	//Getters and Setter
 	
 	public void setSpeed(int speed) {
-		if(idleState)
-			this.speed = speed;
+		if(idleState_)
+			speed_ = speed;
 		update();
 	}
 	
 	public void setLetters(int letters) {
-		if(idleState)
-			this.letters = letters;
+		if(idleState_)
+			letters_ = letters;
 		update();
 	}
 	
 	public boolean isIdle() {
-		return idleState;
+		return idleState_;
 	}
 }
