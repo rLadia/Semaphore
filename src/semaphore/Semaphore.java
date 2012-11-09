@@ -1,10 +1,9 @@
 package semaphore;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,8 +14,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class Semaphore extends java.util.Observable {
-	
+public class Semaphore extends java.util.Observable {	
 	private WordAnimation animation;
 	private Random random = new Random();
 	
@@ -42,15 +40,17 @@ public class Semaphore extends java.util.Observable {
 	//Directories
 	private static final String IMAGE_DIR = "images/"; //image directory
 	private static final String WORD_BANK_LOCATION = "data/data.kyt";
-	
+
 	/**
 	 * Entry point
 	 * @param args
+	 * @throws IOException 
+	 * @throws SecurityException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SecurityException, IOException {
 		Semaphore model = new Semaphore();
 		StateManager controller = new StateManager(model);
-		new SemaphoreGUI(model, controller);
+		new SemaphoreGUI(model, controller);		
 	}
 	
 	/**
@@ -59,10 +59,16 @@ public class Semaphore extends java.util.Observable {
 	 * @return
 	 */
 	private List<String> loadFile(String pathLocation) {
+		
 		List<String> file = new ArrayList<String>();
 		try {
-			Path path = Paths.get(pathLocation);
-			file = Files.readAllLines(path, Charset.forName("US-ASCII"));
+			InputStream fileStream = getClass().getResourceAsStream(pathLocation);
+			BufferedReader fileReader = new BufferedReader(new InputStreamReader(fileStream, "UTF-8"));
+			String line;
+			while( (line = fileReader.readLine()) != null) { 
+				file.addAll(Arrays.asList(line.split(" ")));
+			}
+			fileReader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -77,7 +83,7 @@ public class Semaphore extends java.util.Observable {
 	 */
 	private void populateWordBank() {
 		
-		List<String> file = loadFile(Semaphore.WORD_BANK_LOCATION);
+		List<String> file = loadFile(WORD_BANK_LOCATION);
 		
 		//goes through each line in the file and adds to wordbank
 		for(String line : file) {
@@ -109,8 +115,8 @@ public class Semaphore extends java.util.Observable {
 	 * Sole constructor
 	 */
 	public Semaphore() {
-		populateWordBank();
 		this.setImage("splash.gif");
+		populateWordBank();
 	}
 	
 	/**
@@ -174,6 +180,7 @@ public class Semaphore extends java.util.Observable {
 		putWord(usedWords, word);
 		wordBank.get(letterIndex).remove(wordIndex);
 		checkWordBank();
+		System.out.println("Word: " + word.word);
 		return word.word;
 	}
 	

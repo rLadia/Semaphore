@@ -10,10 +10,8 @@ import java.awt.GridBagLayout;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
-
-import java.io.File;
 import java.io.IOException;
-
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Observable;
@@ -32,7 +30,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import org.imgscalr.*;
+import org.imgscalr.Scalr;
 
 public class SemaphoreGUI implements java.util.Observer {
 	
@@ -358,8 +356,10 @@ public class SemaphoreGUI implements java.util.Observer {
 	}
 	
 	private BufferedImage loadImage(String pathLocation) {
+		URL url = getClass().getResource(pathLocation);
 		try {
-			BufferedImage img = ImageIO.read(new File(pathLocation));
+			//BufferedImage img = ImageIO.read(new File(pathLocation));
+			BufferedImage img = ImageIO.read(url);
 			return img;
 		} catch (IOException e) {
 			System.out.println(pathLocation + " not found.");
@@ -376,11 +376,10 @@ public class SemaphoreGUI implements java.util.Observer {
 	 */
 	private void setDrawing(String pathLocation) {
 		BufferedImage img = loadImage(pathLocation);
+		if (img == null) 
+			return; //*TODO* log error, load default image
 		image_ = img;
-		if(img == null)
-			return; //*TODO* add to error log, use default image
 		setImage(image_);
-				
 	}
 
 	private void setImage(BufferedImage img) {
