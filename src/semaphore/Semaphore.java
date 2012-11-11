@@ -15,14 +15,15 @@ import java.util.TimerTask;
 
 
 public class Semaphore extends java.util.Observable {	
-	private WordAnimation animation;
+	private WordAnimation animation_;
 	private Random random = new Random();
 	
+	//words organized by number of letters
 	private HashMap<Integer, ArrayList<Word>> 
-		wordBank = new HashMap<Integer, ArrayList<Word>>();
+		wordBank_ = new HashMap<Integer, ArrayList<Word>>();
 	
-	private HashMap<Integer, ArrayList<Word>> 
-		usedWords = new HashMap<Integer, ArrayList<Word>>();
+	//private HashMap<Integer, ArrayList<Word>> 
+	//	usedWords = new HashMap<Integer, ArrayList<Word>>();
 	
 	//State Variables
 	private boolean idleState_ = true;
@@ -35,7 +36,7 @@ public class Semaphore extends java.util.Observable {
 	private int speed_ = 1;
 	private int letters_ = 3;
 	
-	private int DEFAULT_SPEED = 1500; //1 second per letter
+	private int DEFAULT_SPEED = 1500; //milliseconds
 	
 	//Directories
 	private static final String IMAGE_DIR = "images/"; //image directory
@@ -53,27 +54,27 @@ public class Semaphore extends java.util.Observable {
 		new SemaphoreGUI(model, controller);		
 	}
 	
+	private BufferedReader loadFile(String pathLocation) {
+		InputStream stream = getClass().getResourceAsStream(pathLocation);
+		return new BufferedReader(new InputStreamReader(stream));
+	}
+	
 	/**
 	 * Returns a list of strings pulled from a file
 	 * @param pathLocation - the location of the file
 	 * @return
+	 * @throws IOException if unable to load the file at pathLocation
 	 */
-	private List<String> loadFile(String pathLocation) {
-		
-		List<String> file = new ArrayList<String>();
-		try {
-			InputStream fileStream = getClass().getResourceAsStream(pathLocation);
-			BufferedReader fileReader = new BufferedReader(new InputStreamReader(fileStream, "UTF-8"));
-			String line;
-			while( (line = fileReader.readLine()) != null) { 
-				file.addAll(Arrays.asList(line.split(" ")));
-			}
-			fileReader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return file;
+	private List<String> createListFromFile(String pathLocation) 
+			throws IOException {
+		List<String> wordList = new ArrayList<String>();
+		BufferedReader file = loadFile(pathLocation);
+		String line;
+		while ((line = file.readLine()) != null) {
+			wordList.addAll(Arrays.asList(line.split(" ")));
+		} 
+		file.close();
+		return wordList;
 	}
 	
 	/**
@@ -81,34 +82,39 @@ public class Semaphore extends java.util.Observable {
 	 * Words are randomly added to the word bank, sorted by how many letters 
 	 * contained in each word 
 	 */
-	private void populateWordBank() {
-		
-		List<String> file = loadFile(WORD_BANK_LOCATION);
-		
-		//goes through each line in the file and adds to wordbank
-		for(String line : file) {
-			List<String> wordArray = Arrays.asList(line.split(" "));
-			for(String word : wordArray) {
-				putWord(this.wordBank, new Word(word));
+	private void populatewordBank_() {
+		List<String> file;
+		try {
+			file = createListFromFile(WORD_BANK_LOCATION);
+			
+			//goes through each line in the file and adds to wordBank_
+			for(String line : file) {
+				List<String> wordArray = Arrays.asList(line.split(" "));
+				for(String word : wordArray) {
+					putWord(this.wordBank_, new Word(word));
+				}
 			}
-		}
-		
-		for(Integer i : wordBank.keySet()) {
-			Collections.shuffle(wordBank.get(i));
+			
+			for(Integer i : wordBank_.keySet()) {
+				Collections.shuffle(wordBank_.get(i));
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
 	/**
-	 * Adds word to the proper array in wordBank. If there is no existing  
+	 * Adds word to the proper array in wordBank_. If there is no existing  
 	 * array, one is created and the word is added to it
-	 * @param wordBank
+	 * @param wordBank_
 	 * @param word
 	 */
-	private void putWord(HashMap<Integer, ArrayList<Word>> wordBank, Word word) {
+	private void putWord(HashMap<Integer, ArrayList<Word>> wordBank_, Word word) {
 		int letterCount = word.word.length();
-		if(!wordBank.containsKey(letterCount))
-			wordBank.put(letterCount, new ArrayList<Word>());
-		wordBank.get(letterCount).add(word);
+		if(!wordBank_.containsKey(letterCount))
+			wordBank_.put(letterCount, new ArrayList<Word>());
+		wordBank_.get(letterCount).add(word);
 	}
 	
 	/**
@@ -116,7 +122,7 @@ public class Semaphore extends java.util.Observable {
 	 */
 	public Semaphore() {
 		this.setImage("splash.gif");
-		populateWordBank();
+		populatewordBank_();
 	}
 	
 	/**
@@ -130,32 +136,38 @@ public class Semaphore extends java.util.Observable {
 		idleState_ = false;
 		
 		word_ = randomWord();
-		animation = 
+		animation_ = 
 				new WordAnimation(this, word_, DEFAULT_SPEED - 350*(speed_-1));
 	}
 	
 	/**
-	 * 
-	 * 
+	 * Restarts the current animation. If program is idle, this function 
+	 * does nothing
 	 */
 	public void replayWord() {
 		if(idleState_ == true) //no word to replay 
 			return;
 		
-		animation = 
+		animation_ = 
 				new WordAnimation(this, word_, DEFAULT_SPEED - 350*(speed_-1));
 	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	/*
 	private String randomWord() {		
 		if(letters_ != 0) {
 			return chooseWord(letters_);
 		} else { //can use any set of letters
 			int totalWords = 0;
-			for (Integer i : wordBank.keySet()) {
-				totalWords += wordBank.get(i).size();
+			for (Integer i : wordBank_.keySet()) {
+				totalWords += wordBank_.get(i).size();
 			}
 			int index = random.nextInt(totalWords);
-			for (Integer i : wordBank.keySet()) {
-				ArrayList<Word> wordList = wordBank.get(i);
+			for (Integer i : wordBank_.keySet()) {
+				ArrayList<Word> wordList = wordBank_.get(i);
 				
 				if(index < wordList.size()) 
 					return chooseWord(i);
@@ -163,8 +175,8 @@ public class Semaphore extends java.util.Observable {
 				index -= wordList.size();
 			}
 		}
-		return chooseWord(1); //should never reach here
-	}
+		return chooseRandomWord(1); //should never reach here
+	}*/
 	
 	//*TODO* improve this process
 	/** Returns a random word from the list of words with an amount of 
@@ -173,35 +185,41 @@ public class Semaphore extends java.util.Observable {
 	 * @param letterIndex, the number of letters in the word
 	 * @return
 	 */
-	private String chooseWord(int letterIndex) {
+	/*
+	private String chooseRandomWord(int letterIndex) {
 		System.out.println("Letter Index: "+ letterIndex);
-		int wordIndex = random.nextInt(wordBank.get(letterIndex).size());
-		Word word = wordBank.get(letterIndex).get(wordIndex);
+		int wordIndex = random.nextInt(wordBank_.get(letterIndex).size());
+		Word word = wordBank_.get(letterIndex).get(wordIndex);
 		putWord(usedWords, word);
-		wordBank.get(letterIndex).remove(wordIndex);
-		checkWordBank();
+		wordBank_.get(letterIndex).remove(wordIndex);
+		checkwordBank_();
 		System.out.println("Word: " + word.word);
 		return word.word;
-	}
+	}*/
 	
-	private void checkWordBank() {
-		for(Integer i : wordBank.keySet()) {
-			if(wordBank.get(i).isEmpty()) {
-				wordBank.put(i, usedWords.get(i));
-				Collections.shuffle(wordBank.get(i));
+	/*
+	private void checkwordBank_() {
+		for(Integer i : wordBank_.keySet()) {
+			if(wordBank_.get(i).isEmpty()) {
+				wordBank_.put(i, usedWords.get(i));
+				Collections.shuffle(wordBank_.get(i));
 				usedWords.put(i, new ArrayList<Word>());
 			}
 		}
 	}
+	*/
 	
-	/*
-	private String chooseWord() {			
-		int letters = this.letters;
-		if(this.letters == 0) { //can use any set of letters
-			int size = wordBank.keySet().size();
+	/**
+	 * 
+	 * @return
+	 */
+	private String randomWord() {			
+		int letters = letters_;
+		if(letters == 0) { //can use any set of letters
+			int size = wordBank_.keySet().size();
 			int randomIndex = random.nextInt(size);
 			int index = 0;
-			for(Integer i : wordBank.keySet()) {
+			for(Integer i : wordBank_.keySet()) {
 				if (index == randomIndex){
 					letters = i;
 					break;
@@ -210,12 +228,12 @@ public class Semaphore extends java.util.Observable {
 			}
 		}
 		
-		int wordIndex = (int) (Math.random() * wordBank.get(letters).size());
-		String word = wordBank.get(letters).get(wordIndex).word;
-		if(word.equals(this.word)) //no duplicate words
-			return chooseWord();
+		int wordIndex = (int) (Math.random() * wordBank_.get(letters).size());
+		String word = wordBank_.get(letters).get(wordIndex).word;
+		if(word.equals(word_)) //no duplicate words
+			return randomWord();
 		return word;
-	}*/
+	}
 	
 	/**
 	 * Compares the guess to the actual word. Updates the score and causes the
@@ -230,7 +248,7 @@ public class Semaphore extends java.util.Observable {
 		
 		idleState_ = true;
 		//*TODO* add checks for invalid guesses, incorrect letters etc.
-		animation.cancel();
+		animation_.cancel();
 		if(guess.equalsIgnoreCase(word_)) {
 			updateScore(true);
 		} else {
@@ -240,7 +258,7 @@ public class Semaphore extends java.util.Observable {
 	
 	/**
 	 * Wins increases score by speed*letters. Random number of letters 
-	 * multiplies score by 10. Losses decrease score by 2 
+	 * multiplies score by 10. 
 	 * @param won
 	 */
 	private void updateScore(boolean won) {

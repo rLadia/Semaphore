@@ -11,7 +11,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Observable;
@@ -355,6 +355,19 @@ public class SemaphoreGUI implements java.util.Observer {
 		
 	}
 	
+	private BufferedImage loadImage(String path) {
+        InputStream imageStream = this.getClass().getResourceAsStream(path);
+        BufferedImage img = null;
+		try {
+			img = ImageIO.read(imageStream);
+		} catch (IOException e) {
+			e.printStackTrace();
+			img = null;
+		}
+        return img;
+    }
+	
+	/*
 	private BufferedImage loadImage(String pathLocation) {
 		URL url = getClass().getResource(pathLocation);
 		try {
@@ -367,6 +380,7 @@ public class SemaphoreGUI implements java.util.Observer {
 		}
 		return null;
 	}
+	*/
 	
 	//*TODO* thread the loading of the image
 	/**
